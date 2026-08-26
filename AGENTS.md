@@ -17,6 +17,11 @@
   - 输出格式：`.mp4` (`gopro3_timelapse.mp4`)，启用 `+faststart`。
 
 # 编译与交叉编译指南
+在 Go 1.26 环境下编译前，如根目录下无 `go.mod`，需先生成 `go.mod`：
+```bash
+go mod init gopro3_timelapse
+```
+
 通过 `go build` 构建，建议设置 `CGO_ENABLED=0` 实现静态编译：
 - **Windows 64-bit Intel**:
   ```bash
