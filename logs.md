@@ -48,3 +48,13 @@
 - **Git 操作**:
   - 暂存文件: `git add AGENTS.md src/main.go go.mod go.sum src/main_test.go`
   - 提交: `git commit -m "feat: 添加 EXIF 时间戳提取与左上角硬字幕渲染功能并完善单元测试与文档"`
+
+---
+
+## 6. 单元测试扩展与重写
+- **扩展内容 (`src/main_test.go`)**:
+  - **`TestEscapePath`**: 验证 FFmpeg 路径转义逻辑，确保单引号等特殊字符正确转义。
+  - **`TestBlendRGBA`**: 验证图像处理中的 Alpha 颜色混合（半透明背景与文本合成）算法及边界透明度。
+  - **`TestProcessPhotoWithTimestamp`**: 验证整张照片的时间戳叠加、JPEG 编码存储及异常文件降级/报错处理。
+- **验证结果**:
+  - 执行 `go test -v ./...`，全部单元测试成功通过 (`PASS`)。
