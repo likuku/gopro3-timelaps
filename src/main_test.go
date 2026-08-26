@@ -3,6 +3,7 @@ package main
 import (
 	"image"
 	"image/color"
+	"image/jpeg"
 	"os"
 	"path/filepath"
 	"regexp"
@@ -123,5 +124,94 @@ func TestExtractTimestampFallback(t *testing.T) {
 		if ts != expected {
 			t.Errorf("期望降级为文件修改时间 %s, 实际得到 %s", expected, ts)
 		}
+	}
+}
+
+// 测试路径转义逻辑
+func TestEscapePath(t *testing.T) {
+	tests := []struct {
+		input    string
+		expected string
+	}{
+		{"normal/path/photo.jpg", "normal/path/photo.jpg"},
+		{"path with 'single' quotes.jpg", "path with '\\''single'\\'' quotes.jpg"},
+	}
+
+	for _, tt := range tests {
+		actual := escapePath(tt.input)
+		if actual != tt.expected {
+			t.Errorf("escapePath(%q) = %q, 期望 %q", tt.input, actual, tt.expected)
+		}
+	}
+}
+
+// 测试 Alpha 颜色混合逻辑
+func TestBlendRGBA(t *testing.T) {
+	dst := color.RGBA{R: 255, G: 255, B: 255, A: 255}
+	src := color.RGBA{R: 0, G: 0, B: 0, A: 160}
+
+	result := blendRGBA(dst, src)
+	if result.A != 255 {
+		t.Errorf("期望合成后 Alpha 为 255, 实际得到 %d", result.A)
+	}
+	if result.R >= 255 || result.G >= 255 || result.B >= 255 {
+		t.Errorf("期望白色背景与半透明黑混合后颜色变暗，实际 R=%d, G=%d, B=%d", result.R, result.G, result.B)
+	}
+
+	// 测试透明度为 0 的边界情况
+	zeroSrc := color.RGBA{R: 100, G: 100, B: 100, A: 0}
+	zeroResult := blendRGBA(dst, zeroSrc)
+	if zeroResult != dst {
+		t.Errorf("当 src 透明度为 0 时，期望返回 dst 原色 %v, 实际得到 %v", dst, zeroResult)
+	}
+}
+
+// 测试照片时间戳处理与保存
+func TestProcessPhotoWithTimestamp(t *testing.T) {
+	tmpDir, err := os.MkdirTemp("", "test_process_*")
+	if err != nil {
+		t.Fatalf("创建临时目录失败: %v", err)
+	}
+	defer os.RemoveAll(tmpDir)
+
+	srcImgPath := filepath.Join(tmpDir, "G0010001.JPG")
+	img := image.NewRGBA(image.Rect(0, 0, 200, 200))
+	for y := 0; y < 200; y++ {
+		for x := 0; x < 200; x++ {
+			img.Set(x, y, color.RGBA{R: 0, G: 0, B: 255, A: 255})
+		}
+	}
+	f, err := os.Create(srcImgPath)
+	if err != nil {
+		t.Fatalf("创建测试源图失败: %v", err)
+	}
+	jpeg.Encode(f, img, &jpeg.Options{Quality: 90})
+	f.Close()
+
+	ttfFont, err := opentype.Parse(goregular.TTF)
+	if err != nil {
+		t.Fatalf("解析字体失败: %v", err)
+	}
+	fontFace, err := opentype.NewFace(ttfFont, &opentype.FaceOptions{Size: 16, DPI: 72})
+	if err != nil {
+		t.Fatalf("创建字体 Face 失败: %v", err)
+	}
+	defer fontFace.Close()
+
+	outDir := filepath.Join(tmpDir, "out")
+	os.MkdirAll(outDir, 0755)
+
+	outPath, err := processPhotoWithTimestamp(srcImgPath, "2026-06-06 12:00:00", outDir, fontFace, 0)
+	if err != nil {
+		t.Fatalf("processPhotoWithTimestamp 失败: %v", err)
+	}
+
+	if _, err := os.Stat(outPath); os.IsNotExist(err) {
+		t.Errorf("期望生成输出文件 %s，但文件不存在", outPath)
+	}
+
+	_, err = processPhotoWithTimestamp("non_existent_file.jpg", "2026-06-06 12:00:00", outDir, fontFace, 1)
+	if err == nil {
+		t.Errorf("期望处理不存在的文件时返回错误，实际为 nil")
 	}
 }
