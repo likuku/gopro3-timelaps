@@ -39,3 +39,7 @@ go mod init gopro3_timelapse
   ```bash
   CGO_ENABLED=0 GOOS=freebsd GOARCH=arm64 go build -o gopro3_timelapse_freebsd_arm64 src/main.go
   ```
+
+# Go 模块文件说明 (`go.mod` 与 `go.sum`)
+- **`go.mod`**：定义模块名称（`gopro3_timelapse`）及声明外部依赖（如 `github.com/rwcarlsen/goexif` 和 `golang.org/x/image`）。
+- **`go.sum`**：记录所有依赖包及其特定版本的加密校验和（Cryptographic Checksums），用于防止依赖被篡改并确保团队与 CI 构建的一致性。
