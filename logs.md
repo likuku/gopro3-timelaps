@@ -58,3 +58,20 @@
   - **`TestProcessPhotoWithTimestamp`**: 验证整张照片的时间戳叠加、JPEG 编码存储及异常文件降级/报错处理。
 - **验证结果**:
   - 执行 `go test -v ./...`，全部单元测试成功通过 (`PASS`)。
+
+---
+
+## 7. Go 版本升级与文档/规范同步 (Go 1.27)
+- **环境检测与版本升级**:
+  - 检测系统 Go 版本为 `go1.27.0 linux/amd64`。
+  - 将 `go.mod` 中的 Go 版本要求从 `1.25.7` 升级为 `1.27`。
+  - 执行 `go mod tidy` 整理依赖与校验和 (`go.sum`)。
+- **单元测试验证**:
+  - 执行 `go test -v ./src/...`，验证 `src/main.go` 与 `src/main_test.go` 在 Go 1.27 环境下的完全兼容性，全部测试通过。
+- **项目文档及日志全局检查与更新**:
+  - 检索项目中所有提及过旧 Go 版本的文件（`README.md`、`AGENTS.md`、`logs.md`），统一更新为 `Go 1.27`。
+  - 在 `AGENTS.md` 的交叉编译指南中补全了 `Linux 64-bit Intel` 编译目标，与 `README.md` 保持完全一致。
+- **Git 提交记录**:
+  - `chore: 将 Go 版本升级至 1.27`
+  - `docs: 将文档及日志中的 Go 版本号统一更新至 1.27`
+  - `docs: 在 AGENTS.md 中补全 Linux 64-bit Intel 交叉编译指南`
