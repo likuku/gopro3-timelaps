@@ -31,6 +31,10 @@ go mod init gopro3_timelapse
   ```bash
   CGO_ENABLED=0 GOOS=darwin GOARCH=amd64 go build -o gopro3_timelapse_macos_intel src/main.go
   ```
+- **Linux 64-bit Intel**:
+  ```bash
+  CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o gopro3_timelapse_linux_amd64 src/main.go
+  ```
 - **Linux ARM 64-bit**:
   ```bash
   CGO_ENABLED=0 GOOS=linux GOARCH=arm64 go build -o gopro3_timelapse_linux_arm64 src/main.go
