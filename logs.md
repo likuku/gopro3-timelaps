@@ -30,7 +30,7 @@
   - `TestImageTimestampOverlay`: 验证图像左上角文字绘制与 Alpha 颜色混合逻辑。
   - `TestExtractTimestampFallback`: 验证无 EXIF 时的降级逻辑。
 - **执行命令**:
-  - `/usr/lib/go-1.25/bin/go test -v ./...`
+  - `/usr/lib/go-1.27/bin/go test -v ./...`
 - **结果**: 测试全部通过 (`PASS`)。
 
 ---
