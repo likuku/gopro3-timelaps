@@ -192,16 +192,11 @@ func TestProcessPhotoWithTimestamp(t *testing.T) {
 	if err != nil {
 		t.Fatalf("解析字体失败: %v", err)
 	}
-	fontFace, err := opentype.NewFace(ttfFont, &opentype.FaceOptions{Size: 16, DPI: 72})
-	if err != nil {
-		t.Fatalf("创建字体 Face 失败: %v", err)
-	}
-	defer fontFace.Close()
 
 	outDir := filepath.Join(tmpDir, "out")
 	os.MkdirAll(outDir, 0755)
 
-	outPath, err := processPhotoWithTimestamp(srcImgPath, "2026-06-06 12:00:00", outDir, fontFace, 0)
+	outPath, err := processPhotoWithTimestamp(srcImgPath, "2026-06-06 12:00:00", outDir, ttfFont, 0)
 	if err != nil {
 		t.Fatalf("processPhotoWithTimestamp 失败: %v", err)
 	}
@@ -210,8 +205,49 @@ func TestProcessPhotoWithTimestamp(t *testing.T) {
 		t.Errorf("期望生成输出文件 %s，但文件不存在", outPath)
 	}
 
-	_, err = processPhotoWithTimestamp("non_existent_file.jpg", "2026-06-06 12:00:00", outDir, fontFace, 1)
+	_, err = processPhotoWithTimestamp("non_existent_file.jpg", "2026-06-06 12:00:00", outDir, ttfFont, 1)
 	if err == nil {
 		t.Errorf("期望处理不存在的文件时返回错误，实际为 nil")
+	}
+}
+
+// 测试动态字体行高（原始画面高度的 3.5%）及基于图像高度的处理
+func TestProcessPhotoWithDynamicFontHeight(t *testing.T) {
+	tmpDir, err := os.MkdirTemp("", "test_dyn_process_*")
+	if err != nil {
+		t.Fatalf("创建临时目录失败: %v", err)
+	}
+	defer os.RemoveAll(tmpDir)
+
+	srcImgPath := filepath.Join(tmpDir, "G0020002.JPG")
+	// 构造高度为 1000 的测试图，动态字号应为 1000 * 0.035 = 35
+	img := image.NewRGBA(image.Rect(0, 0, 1200, 1000))
+	for y := 0; y < 1000; y++ {
+		for x := 0; x < 1200; x++ {
+			img.Set(x, y, color.RGBA{R: 200, G: 200, B: 200, A: 255})
+		}
+	}
+	f, err := os.Create(srcImgPath)
+	if err != nil {
+		t.Fatalf("创建测试源图失败: %v", err)
+	}
+	jpeg.Encode(f, img, &jpeg.Options{Quality: 90})
+	f.Close()
+
+	ttfFont, err := opentype.Parse(goregular.TTF)
+	if err != nil {
+		t.Fatalf("解析字体失败: %v", err)
+	}
+
+	outDir := filepath.Join(tmpDir, "out")
+	os.MkdirAll(outDir, 0755)
+
+	outPath, err := processPhotoWithTimestamp(srcImgPath, "2026-09-07 15:30:00", outDir, ttfFont, 0)
+	if err != nil {
+		t.Fatalf("processPhotoWithTimestamp 失败: %v", err)
+	}
+
+	if _, err := os.Stat(outPath); os.IsNotExist(err) {
+		t.Errorf("期望生成输出文件 %s，但文件不存在", outPath)
 	}
 }

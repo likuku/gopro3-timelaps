@@ -84,21 +84,9 @@ func main() {
 		os.Exit(1)
 	}
 
-	// 为图片处理准备字体 Face (根据图片尺寸自适应字号，通常 720p/1080p 使用 28-36 号字)
-	// 这里预设字号 32
-	fontFace, err := opentype.NewFace(ttfFont, &opentype.FaceOptions{
-		Size: 32,
-		DPI:  72,
-	})
-	if err != nil {
-		fmt.Fprintf(os.Stderr, "创建字体 Face 失败: %v\n", err)
-		os.Exit(1)
-	}
-	defer fontFace.Close()
-
 	processedPhotos := make([]string, len(photos))
 	for i, p := range photos {
-		processedPath, err := processPhotoWithTimestamp(p.path, p.timestamp, tmpDir, fontFace, i)
+		processedPath, err := processPhotoWithTimestamp(p.path, p.timestamp, tmpDir, ttfFont, i)
 		if err != nil {
 			fmt.Fprintf(os.Stderr, "处理照片 %s 失败: %v\n", p.path, err)
 			os.Exit(1)
@@ -188,7 +176,7 @@ func extractTimestamp(path string) string {
 }
 
 // 在照片左上角绘制时间戳字幕，并保存到临时目录
-func processPhotoWithTimestamp(srcPath, timestamp, outDir string, fontFace font.Face, index int) (string, error) {
+func processPhotoWithTimestamp(srcPath, timestamp, outDir string, ttfFont *opentype.Font, index int) (string, error) {
 	file, err := os.Open(srcPath)
 	if err != nil {
 		return "", err
@@ -208,6 +196,20 @@ func processPhotoWithTimestamp(srcPath, timestamp, outDir string, fontFace font.
 	if timestamp == "" {
 		timestamp = "0000-00-00 00:00:00"
 	}
+
+	// 字体行高从固定尺寸改为原始画面高度的 3.5%
+	fontSize := float64(bounds.Dy()) * 0.035
+	if fontSize < 8 {
+		fontSize = 8
+	}
+	fontFace, err := opentype.NewFace(ttfFont, &opentype.FaceOptions{
+		Size: fontSize,
+		DPI:  72,
+	})
+	if err != nil {
+		return "", err
+	}
+	defer fontFace.Close()
 
 	// 绘制左上角字幕：半透明背景框 + 白色文字
 	drawTimestampOverlay(rgba, timestamp, fontFace)
