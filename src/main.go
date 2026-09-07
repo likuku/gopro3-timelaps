@@ -85,14 +85,19 @@ func main() {
 	}
 
 	processedPhotos := make([]string, len(photos))
+	totalPhotos := len(photos)
 	for i, p := range photos {
+		current := i + 1
+		fmt.Printf("\r%s", formatProgress(current, totalPhotos, i))
 		processedPath, err := processPhotoWithTimestamp(p.path, p.timestamp, tmpDir, ttfFont, i)
 		if err != nil {
+			fmt.Printf("\n")
 			fmt.Fprintf(os.Stderr, "处理照片 %s 失败: %v\n", p.path, err)
 			os.Exit(1)
 		}
 		processedPhotos[i] = processedPath
 	}
+	fmt.Printf("\n")
 
 	// 生成 concat 列表文件
 	listFile := filepath.Join(tmpDir, "gopro3_concat_list.txt")
@@ -291,4 +296,22 @@ func blendRGBA(dst, src color.RGBA) color.RGBA {
 // 简单转义单引号，防止路径中有特殊字符
 func escapePath(p string) string {
 	return strings.ReplaceAll(p, "'", "'\\''")
+}
+
+// 格式化图片处理进度条与动态转圈状态 (例如: ⠋ [15/100] [========            ])
+func formatProgress(current, total, frameIndex int) string {
+	spinner := []string{"⠋", "⠙", "⠹", "⠸", "⠼", "⠴", "⠦", "⠧", "⠇", "⠏"}
+	spinChar := spinner[frameIndex%len(spinner)]
+
+	barWidth := 20
+	if total <= 0 {
+		total = 1
+	}
+	filled := current * barWidth / total
+	if filled > barWidth {
+		filled = barWidth
+	}
+	bar := strings.Repeat("=", filled) + strings.Repeat(" ", barWidth-filled)
+
+	return fmt.Sprintf("%s [%d/%d] [%s]", spinChar, current, total, bar)
 }

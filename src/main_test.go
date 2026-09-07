@@ -9,6 +9,7 @@ import (
 	"regexp"
 	"sort"
 	"strconv"
+	"strings"
 	"testing"
 
 	"golang.org/x/image/font/gofont/goregular"
@@ -249,5 +250,26 @@ func TestProcessPhotoWithDynamicFontHeight(t *testing.T) {
 
 	if _, err := os.Stat(outPath); os.IsNotExist(err) {
 		t.Errorf("期望生成输出文件 %s，但文件不存在", outPath)
+	}
+}
+
+// 测试进度条与转圈状态格式化函数
+func TestFormatProgress(t *testing.T) {
+	result1 := formatProgress(1, 100, 0)
+	expected1Prefix := "⠋ [1/100]"
+	if !strings.HasPrefix(result1, expected1Prefix) {
+		t.Errorf("期望进度输出以 %s 开头，实际得到 %s", expected1Prefix, result1)
+	}
+
+	result15 := formatProgress(15, 100, 1)
+	expected15Prefix := "⠙ [15/100]"
+	if !strings.HasPrefix(result15, expected15Prefix) {
+		t.Errorf("期望进度输出以 %s 开头，实际得到 %s", expected15Prefix, result15)
+	}
+
+	result100 := formatProgress(100, 100, 2)
+	expected100Prefix := "⠹ [100/100]"
+	if !strings.HasPrefix(result100, expected100Prefix) {
+		t.Errorf("期望进度输出以 %s 开头，实际得到 %s", expected100Prefix, result100)
 	}
 }
